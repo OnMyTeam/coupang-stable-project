@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Coupang Stable RPC Console</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Tempo Payment RPC</p>
+          <h1>Coupang Stable Console</h1>
+        </div>
+        <div class="endpoint-control">
+          <label for="rpc-endpoint">Endpoint</label>
+          <input id="rpc-endpoint" type="text" autocomplete="off" />
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="status-strip" aria-label="RPC status">
+          <button class="quick-card" id="health-button" type="button">
+            <span class="quick-icon">+</span>
+            <span>
+              <strong>Health</strong>
+              <small id="health-status">Idle</small>
+            </span>
+          </button>
+          <button class="quick-card" id="block-button" type="button">
+            <span class="quick-icon">#</span>
+            <span>
+              <strong>Block</strong>
+              <small id="block-number">Idle</small>
+            </span>
+          </button>
+          <button class="quick-card" id="methods-button" type="button">
+            <span class="quick-icon">{ }</span>
+            <span>
+              <strong>Methods</strong>
+              <small id="method-count">Idle</small>
+            </span>
+          </button>
+        </section>
+
+        <section class="main-grid">
+          <div class="panel controls-panel">
+            <div class="tabs" role="tablist" aria-label="RPC actions">
+              <button class="tab-button active" type="button" data-tab="payment" role="tab" aria-selected="true">
+                Payment
+              </button>
+              <button class="tab-button" type="button" data-tab="query" role="tab" aria-selected="false">
+                Query
+              </button>
+              <button class="tab-button" type="button" data-tab="raw" role="tab" aria-selected="false">
+                Raw
+              </button>
+            </div>
+
+            <form class="tab-panel active" id="payment-panel" data-panel="payment">
+              <div class="form-grid">
+                <label class="field full">
+                  <span>Token</span>
+                  <input id="pay-token" type="text" value="0x0000000000000000000000000000000000000000" autocomplete="off" />
+                </label>
+                <label class="field full">
+                  <span>Recipient</span>
+                  <input id="pay-recipient" type="text" placeholder="0x..." autocomplete="off" required />
+                </label>
+                <label class="field">
+                  <span>Amount</span>
+                  <input id="pay-amount" type="text" placeholder="1000000000000000000" autocomplete="off" required />
+                </label>
+                <label class="field">
+                  <span>Memo</span>
+                  <input id="pay-memo" type="text" placeholder="order-1001" autocomplete="off" />
+                </label>
+                <label class="toggle-row full">
+                  <input id="pay-native" type="checkbox" checked />
+                  <span>Native token</span>
+                </label>
+              </div>
+              <div class="button-row">
+                <button class="secondary-button" id="estimate-button" type="button">Estimate Gas</button>
+                <button class="primary-button" type="submit">Send Payment</button>
+              </div>
+            </form>
+
+            <div class="tab-panel query-panel" id="query-panel" data-panel="query">
+              <form id="payment-query-form" class="query-form">
+                <label class="field">
+                  <span>Payment ID</span>
+                  <input id="payment-id" type="text" placeholder="1" autocomplete="off" required />
+                </label>
+                <button class="primary-button" type="submit">Get Payment</button>
+              </form>
+              <form id="receipt-query-form" class="query-form">
+                <label class="field full">
+                  <span>Transaction Hash</span>
+                  <input id="tx-hash" type="text" placeholder="0x..." autocomplete="off" required />
+                </label>
+                <button class="secondary-button" type="submit">Get Receipt</button>
+              </form>
+            </div>
+
+            <form class="tab-panel raw-panel" id="raw-panel" data-panel="raw">
+              <label class="field full">
+                <span>JSON-RPC Payload</span>
+                <textarea id="raw-payload" spellcheck="false"></textarea>
+              </label>
+              <div class="button-row">
+                <button class="secondary-button" id="format-raw-button" type="button">Format</button>
+                <button class="primary-button" type="submit">Send Raw</button>
+              </div>
+            </form>
+          </div>
+
+          <aside class="panel response-panel">
+            <div class="response-header">
+              <div>
+                <p class="eyebrow">Response</p>
+                <h2 id="response-title">Ready</h2>
+              </div>
+              <span class="badge" id="response-badge">Idle</span>
+            </div>
+            <pre id="response-output">{}</pre>
+          </aside>
+        </section>
+
+        <section class="panel history-panel">
+          <div class="history-header">
+            <h2>History</h2>
+            <button class="ghost-button" id="clear-history-button" type="button">Clear</button>
+          </div>
+          <div id="history-list" class="history-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
