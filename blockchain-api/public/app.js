@@ -1,5 +1,3 @@
-const nativeToken = "0x0000000000000000000000000000000000000000";
-
 const state = {
   id: 1,
   history: []
@@ -11,49 +9,19 @@ const responseBadge = document.querySelector("#response-badge");
 const responseOutput = document.querySelector("#response-output");
 const historyList = document.querySelector("#history-list");
 const rawPayload = document.querySelector("#raw-payload");
-const payToken = document.querySelector("#pay-token");
-const payNative = document.querySelector("#pay-native");
 
 endpointInput.value = `${window.location.origin}/rpc`;
 rawPayload.value = pretty({
   jsonrpc: "2.0",
   id: state.id,
-  method: "rpc_methods"
-});
-
-document.querySelectorAll(".tab-button").forEach((button) => {
-  button.addEventListener("click", () => activateTab(button.dataset.tab));
+  method: "payment_getDeployment"
 });
 
 document.querySelector("#health-button").addEventListener("click", checkHealth);
 document.querySelector("#block-button").addEventListener("click", getBlockNumber);
 document.querySelector("#methods-button").addEventListener("click", getMethods);
 document.querySelector("#clear-history-button").addEventListener("click", clearHistory);
-document.querySelector("#estimate-button").addEventListener("click", estimatePaymentGas);
 document.querySelector("#format-raw-button").addEventListener("click", formatRawPayload);
-
-payNative.addEventListener("change", () => {
-  payToken.disabled = payNative.checked;
-  if (payNative.checked) {
-    payToken.value = nativeToken;
-  }
-});
-payToken.disabled = payNative.checked;
-
-document.querySelector("#payment-panel").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  await sendPayment();
-});
-
-document.querySelector("#payment-query-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  await getPayment();
-});
-
-document.querySelector("#receipt-query-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  await getReceipt();
-});
 
 document.querySelector("#raw-panel").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -61,18 +29,6 @@ document.querySelector("#raw-panel").addEventListener("submit", async (event) =>
 });
 
 renderHistory();
-
-function activateTab(tab) {
-  document.querySelectorAll(".tab-button").forEach((button) => {
-    const active = button.dataset.tab === tab;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-selected", String(active));
-  });
-
-  document.querySelectorAll(".tab-panel").forEach((panel) => {
-    panel.classList.toggle("active", panel.dataset.panel === tab);
-  });
-}
 
 async function checkHealth() {
   const startedAt = performance.now();
@@ -104,26 +60,6 @@ async function getMethods() {
   if (Array.isArray(response?.result)) {
     setQuickStatus("#method-count", `${response.result.length} methods`);
   }
-}
-
-async function sendPayment() {
-  await callRpc("payment_pay", paymentParams());
-}
-
-async function estimatePaymentGas() {
-  await callRpc("payment_estimatePayGas", paymentParams());
-}
-
-async function getPayment() {
-  await callRpc("payment_getPayment", {
-    paymentId: valueOf("#payment-id")
-  });
-}
-
-async function getReceipt() {
-  await callRpc("chain_getTransactionReceipt", {
-    hash: valueOf("#tx-hash")
-  });
 }
 
 async function sendRaw() {
@@ -187,18 +123,6 @@ async function postJson(url, payload) {
   }
 
   return response.json();
-}
-
-function paymentParams() {
-  const native = payNative.checked;
-
-  return {
-    token: native ? nativeToken : valueOf("#pay-token"),
-    recipient: valueOf("#pay-recipient"),
-    amount: valueOf("#pay-amount"),
-    memo: valueOf("#pay-memo"),
-    native
-  };
 }
 
 function showResponse(title, body, ok) {
@@ -284,10 +208,6 @@ function hasRpcError(response) {
 
 function setQuickStatus(selector, value) {
   document.querySelector(selector).textContent = value;
-}
-
-function valueOf(selector) {
-  return document.querySelector(selector).value.trim();
 }
 
 function pretty(value) {

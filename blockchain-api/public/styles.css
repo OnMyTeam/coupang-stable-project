@@ -179,44 +179,26 @@ textarea:focus {
   padding: 16px;
 }
 
-.tabs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  padding: 4px;
-  margin-bottom: 16px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #f1f4f6;
-}
-
-.tab-button {
-  min-height: 38px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted);
-  font-weight: 800;
-}
-
-.tab-button.active {
-  background: #fff;
-  color: var(--accent-strong);
-  box-shadow: 0 1px 4px rgba(23, 32, 42, 0.1);
-}
-
-.tab-panel {
-  display: none;
-}
-
-.tab-panel.active {
-  display: block;
-}
-
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.contract-empty {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7faf9;
+}
+
+.muted-copy {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .full {
@@ -242,15 +224,6 @@ textarea:focus {
   gap: 10px;
   align-items: end;
   margin-top: 16px;
-}
-
-.query-panel {
-  display: none;
-}
-
-.query-panel.active {
-  display: grid;
-  gap: 16px;
 }
 
 .query-form {
@@ -425,8 +398,7 @@ textarea:focus {
     font-size: 25px;
   }
 
-  .form-grid,
-  .tabs {
+  .form-grid {
     grid-template-columns: 1fr;
   }
 

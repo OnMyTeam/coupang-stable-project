@@ -46,65 +46,13 @@
 
         <section class="main-grid">
           <div class="panel controls-panel">
-            <div class="tabs" role="tablist" aria-label="RPC actions">
-              <button class="tab-button active" type="button" data-tab="payment" role="tab" aria-selected="true">
-                Payment
-              </button>
-              <button class="tab-button" type="button" data-tab="query" role="tab" aria-selected="false">
-                Query
-              </button>
-              <button class="tab-button" type="button" data-tab="raw" role="tab" aria-selected="false">
-                Raw
-              </button>
-            </div>
+            <section class="contract-empty" aria-label="Payment contract status">
+              <p class="eyebrow">Payment Contract</p>
+              <h2>No callable methods</h2>
+              <p class="muted-copy">Payment.sol currently has no public or external functions.</p>
+            </section>
 
-            <form class="tab-panel active" id="payment-panel" data-panel="payment">
-              <div class="form-grid">
-                <label class="field full">
-                  <span>Token</span>
-                  <input id="pay-token" type="text" value="0x0000000000000000000000000000000000000000" autocomplete="off" />
-                </label>
-                <label class="field full">
-                  <span>Recipient</span>
-                  <input id="pay-recipient" type="text" placeholder="0x..." autocomplete="off" required />
-                </label>
-                <label class="field">
-                  <span>Amount</span>
-                  <input id="pay-amount" type="text" placeholder="1000000000000000000" autocomplete="off" required />
-                </label>
-                <label class="field">
-                  <span>Memo</span>
-                  <input id="pay-memo" type="text" placeholder="order-1001" autocomplete="off" />
-                </label>
-                <label class="toggle-row full">
-                  <input id="pay-native" type="checkbox" checked />
-                  <span>Native token</span>
-                </label>
-              </div>
-              <div class="button-row">
-                <button class="secondary-button" id="estimate-button" type="button">Estimate Gas</button>
-                <button class="primary-button" type="submit">Send Payment</button>
-              </div>
-            </form>
-
-            <div class="tab-panel query-panel" id="query-panel" data-panel="query">
-              <form id="payment-query-form" class="query-form">
-                <label class="field">
-                  <span>Payment ID</span>
-                  <input id="payment-id" type="text" placeholder="1" autocomplete="off" required />
-                </label>
-                <button class="primary-button" type="submit">Get Payment</button>
-              </form>
-              <form id="receipt-query-form" class="query-form">
-                <label class="field full">
-                  <span>Transaction Hash</span>
-                  <input id="tx-hash" type="text" placeholder="0x..." autocomplete="off" required />
-                </label>
-                <button class="secondary-button" type="submit">Get Receipt</button>
-              </form>
-            </div>
-
-            <form class="tab-panel raw-panel" id="raw-panel" data-panel="raw">
+            <form class="raw-panel" id="raw-panel">
               <label class="field full">
                 <span>JSON-RPC Payload</span>
                 <textarea id="raw-payload" spellcheck="false"></textarea>
