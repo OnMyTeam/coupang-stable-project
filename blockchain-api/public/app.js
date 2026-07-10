@@ -1,6 +1,32 @@
 const state = {
   id: 1,
-  history: []
+  history: [],
+  methods: []
+};
+
+const FALLBACK_METHODS = [
+  "rpc_methods",
+  "chain_getBlockNumber",
+  "chain_getTransactionReceipt",
+  "payment_getDeployment"
+];
+
+const METHOD_EXAMPLES = {
+  rpc_methods: {
+    hint: "Returns the JSON-RPC APIs currently exposed by this server."
+  },
+  chain_getBlockNumber: {
+    hint: "Returns the latest block number from the connected chain."
+  },
+  chain_getTransactionReceipt: {
+    hint: "Returns a transaction receipt for the provided transaction hash.",
+    params: {
+      hash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  payment_getDeployment: {
+    hint: "Returns the Payment contract deployment metadata."
+  }
 };
 
 const endpointInput = document.querySelector("#rpc-endpoint");
@@ -9,26 +35,29 @@ const responseBadge = document.querySelector("#response-badge");
 const responseOutput = document.querySelector("#response-output");
 const historyList = document.querySelector("#history-list");
 const rawPayload = document.querySelector("#raw-payload");
+const apiMethodSelect = document.querySelector("#api-method-select");
+const apiMethodHint = document.querySelector("#api-method-hint");
 
 endpointInput.value = `${window.location.origin}/rpc`;
-rawPayload.value = pretty({
-  jsonrpc: "2.0",
-  id: state.id,
-  method: "payment_getDeployment"
-});
 
 document.querySelector("#health-button").addEventListener("click", checkHealth);
 document.querySelector("#block-button").addEventListener("click", getBlockNumber);
 document.querySelector("#methods-button").addEventListener("click", getMethods);
 document.querySelector("#clear-history-button").addEventListener("click", clearHistory);
 document.querySelector("#format-raw-button").addEventListener("click", formatRawPayload);
+document.querySelector("#refresh-api-list-button").addEventListener("click", refreshApiMethods);
+apiMethodSelect.addEventListener("change", () => {
+  setRawPayloadExample(apiMethodSelect.value);
+});
 
 document.querySelector("#raw-panel").addEventListener("submit", async (event) => {
   event.preventDefault();
   await sendRaw();
 });
 
+setApiMethods(FALLBACK_METHODS);
 renderHistory();
+refreshApiMethods();
 
 async function checkHealth() {
   const startedAt = performance.now();
@@ -59,6 +88,27 @@ async function getMethods() {
   const response = await callRpc("rpc_methods");
   if (Array.isArray(response?.result)) {
     setQuickStatus("#method-count", `${response.result.length} methods`);
+    setApiMethods(response.result);
+  }
+}
+
+async function refreshApiMethods() {
+  const previousMethod = apiMethodSelect.value;
+  apiMethodSelect.disabled = true;
+
+  try {
+    const response = await postJson(endpointInput.value, buildPayload("rpc_methods"));
+    if (!Array.isArray(response?.result)) {
+      throw new Error(response?.error?.message || "rpc_methods did not return a method list");
+    }
+
+    setQuickStatus("#method-count", `${response.result.length} methods`);
+    setApiMethods(response.result, previousMethod);
+  } catch (error) {
+    setApiMethods(state.methods.length > 0 ? state.methods : FALLBACK_METHODS, previousMethod);
+    showResponse("API List", toErrorBody(error), false);
+  } finally {
+    apiMethodSelect.disabled = false;
   }
 }
 
@@ -84,12 +134,7 @@ function formatRawPayload() {
 }
 
 async function callRpc(method, params) {
-  const payload = {
-    jsonrpc: "2.0",
-    id: state.id++,
-    method,
-    ...(params === undefined ? {} : { params })
-  };
+  const payload = buildPayload(method, params, state.id++);
 
   responseTitle.textContent = method;
   setBadge("Loading", "");
@@ -107,6 +152,38 @@ async function callRpc(method, params) {
     addHistory(method, false, error.message);
     return null;
   }
+}
+
+function setApiMethods(methods, preferredMethod) {
+  const uniqueMethods = [...new Set(methods)].filter((method) => typeof method === "string");
+  const selectedMethod = uniqueMethods.includes(preferredMethod)
+    ? preferredMethod
+    : uniqueMethods[0] || "rpc_methods";
+
+  state.methods = uniqueMethods;
+  apiMethodSelect.innerHTML = uniqueMethods
+    .map(
+      (method) =>
+        `<option value="${escapeHtml(method)}"${method === selectedMethod ? " selected" : ""}>${escapeHtml(method)}</option>`
+    )
+    .join("");
+
+  setRawPayloadExample(selectedMethod);
+}
+
+function setRawPayloadExample(method) {
+  const example = METHOD_EXAMPLES[method] || {};
+  rawPayload.value = pretty(buildPayload(method, example.params));
+  apiMethodHint.textContent = example.hint || "Default JSON-RPC request example for the selected API.";
+}
+
+function buildPayload(method, params, id = state.id) {
+  return {
+    jsonrpc: "2.0",
+    id,
+    method,
+    ...(params === undefined ? {} : { params })
+  };
 }
 
 async function postJson(url, payload) {

@@ -27,6 +27,7 @@ body {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -87,6 +88,7 @@ h2 {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   min-width: 0;
@@ -102,6 +104,11 @@ input {
   padding: 0 12px;
 }
 
+select {
+  height: 44px;
+  padding: 0 38px 0 12px;
+}
+
 textarea {
   min-height: 260px;
   padding: 12px;
@@ -110,6 +117,7 @@ textarea {
 }
 
 input:focus,
+select:focus,
 textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(15, 107, 95, 0.12);
@@ -199,6 +207,27 @@ textarea:focus {
   margin: 0;
   color: var(--muted);
   font-size: 14px;
+}
+
+.api-picker-panel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.api-picker-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.method-hint {
+  min-height: 20px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .full {
@@ -403,7 +432,8 @@ textarea:focus {
   }
 
   .button-row,
-  .query-form {
+  .query-form,
+  .api-picker-header {
     display: grid;
   }
 

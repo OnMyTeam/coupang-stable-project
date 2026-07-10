@@ -8,12 +8,10 @@ import { getPaymentDeploymentFile, loadPaymentDeployment } from "./paymentAbi.js
 const {
   PORT = "3000",
   RPC_PATH = "/rpc",
-  TEMPO_RPC_URL,
-  PRIVATE_KEY
+  TEMPO_RPC_URL
 } = process.env;
 
 const JSON_RPC_VERSION = "2.0";
-const NATIVE_TOKEN = ethers.ZeroAddress;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
 
@@ -35,10 +33,6 @@ app.use(express.static(publicDir));
 
 const provider = new ethers.JsonRpcProvider(TEMPO_RPC_URL);
 
-let readPaymentContract;
-let writePaymentContract;
-let activeDeploymentKey;
-
 function getPaymentDeployment() {
   const deployment = loadPaymentDeployment();
 
@@ -47,48 +41,6 @@ function getPaymentDeployment() {
   }
 
   return deployment;
-}
-
-function getDeploymentKey(deployment) {
-  return `${deployment.deploymentFile}:${deployment.address}:${deployment.updatedAt ?? ""}`;
-}
-
-function getReadPaymentContract() {
-  const deployment = getPaymentDeployment();
-  const deploymentKey = getDeploymentKey(deployment);
-
-  if (readPaymentContract && activeDeploymentKey === deploymentKey) {
-    return readPaymentContract;
-  }
-
-  readPaymentContract = new ethers.Contract(deployment.address, deployment.abi, provider);
-  writePaymentContract = undefined;
-  activeDeploymentKey = deploymentKey;
-  return readPaymentContract;
-}
-
-function getWritePaymentContract() {
-  const deployment = getPaymentDeployment();
-  const deploymentKey = getDeploymentKey(deployment);
-
-  if (writePaymentContract && activeDeploymentKey === deploymentKey) {
-    return writePaymentContract;
-  }
-
-  if (!PRIVATE_KEY) {
-    throw rpcError(
-      ErrorCode.INVALID_PARAMS,
-      "PRIVATE_KEY is required for payment methods"
-    );
-  }
-
-  const privateKey = PRIVATE_KEY.startsWith("0x") ? PRIVATE_KEY : `0x${PRIVATE_KEY}`;
-  const wallet = new ethers.Wallet(privateKey, provider);
-  writePaymentContract = new ethers.Contract(deployment.address, deployment.abi, wallet);
-  readPaymentContract = undefined;
-  activeDeploymentKey = deploymentKey;
-
-  return writePaymentContract;
 }
 
 app.get("/health", (_req, res) => {
@@ -165,10 +117,7 @@ async function callMethod(method, params) {
         "rpc_methods",
         "chain_getBlockNumber",
         "chain_getTransactionReceipt",
-        "payment_getDeployment",
-        "payment_pay",
-        "payment_getPayment",
-        "payment_estimatePayGas"
+        "payment_getDeployment"
       ];
     case "chain_getBlockNumber":
       return provider.getBlockNumber();
@@ -176,12 +125,6 @@ async function callMethod(method, params) {
       return getTransactionReceipt(params);
     case "payment_getDeployment":
       return getPublicPaymentDeployment();
-    case "payment_pay":
-      return pay(params);
-    case "payment_getPayment":
-      return getPayment(params);
-    case "payment_estimatePayGas":
-      return estimatePayGas(params);
     default:
       throw rpcError(ErrorCode.METHOD_NOT_FOUND, `Method not found: ${method}`);
   }
@@ -218,50 +161,6 @@ function getDeploymentStatus() {
   }
 }
 
-async function pay(params) {
-  const { token, recipient, amount, memo, native } = parsePaymentParams(params);
-  const payment = getWritePaymentContract();
-  const value = native ? amount : 0n;
-
-  const tx = await payment.pay(token, recipient, amount, memo, { value });
-  const receipt = await tx.wait();
-  const event = findPaymentCompletedEvent(receipt);
-
-  return {
-    hash: tx.hash,
-    blockNumber: receipt.blockNumber,
-    paymentId: event?.paymentId ?? null,
-    payer: event?.payer ?? null,
-    token,
-    recipient,
-    amount
-  };
-}
-
-async function getPayment(params) {
-  const { paymentId } = parseObjectParams(params, ["paymentId"]);
-  const id = parseUint(paymentId, "paymentId");
-  const payment = getReadPaymentContract();
-  const record = await payment.getPayment(id);
-
-  return {
-    payer: record.payer,
-    token: record.token,
-    recipient: record.recipient,
-    amount: record.amount,
-    memo: record.memo,
-    paidAt: record.paidAt
-  };
-}
-
-async function estimatePayGas(params) {
-  const { token, recipient, amount, memo, native } = parsePaymentParams(params);
-  const payment = getWritePaymentContract();
-  const value = native ? amount : 0n;
-
-  return payment.pay.estimateGas(token, recipient, amount, memo, { value });
-}
-
 async function getTransactionReceipt(params) {
   const { hash } = parseObjectParams(params, ["hash"]);
 
@@ -286,34 +185,6 @@ async function getTransactionReceipt(params) {
   };
 }
 
-function parsePaymentParams(params) {
-  const { token = NATIVE_TOKEN, recipient, amount, memo = "", native = false } =
-    parseObjectParams(params, ["recipient", "amount"]);
-
-  if (!ethers.isAddress(token)) {
-    throw rpcError(ErrorCode.INVALID_PARAMS, "token must be a valid address");
-  }
-
-  if (!ethers.isAddress(recipient)) {
-    throw rpcError(ErrorCode.INVALID_PARAMS, "recipient must be a valid address");
-  }
-
-  if (typeof memo !== "string") {
-    throw rpcError(ErrorCode.INVALID_PARAMS, "memo must be a string");
-  }
-
-  const parsedAmount = parseUint(amount, "amount");
-  const isNative = native || token === NATIVE_TOKEN;
-
-  return {
-    token,
-    recipient,
-    amount: parsedAmount,
-    memo,
-    native: isNative
-  };
-}
-
 function parseObjectParams(params, requiredKeys) {
   if (!params || Array.isArray(params) || typeof params !== "object") {
     throw rpcError(ErrorCode.INVALID_PARAMS, "params must be an object");
@@ -326,38 +197,6 @@ function parseObjectParams(params, requiredKeys) {
   }
 
   return params;
-}
-
-function parseUint(value, name) {
-  try {
-    const parsed = BigInt(value);
-    if (parsed <= 0n) {
-      throw new Error("must be positive");
-    }
-    return parsed;
-  } catch {
-    throw rpcError(ErrorCode.INVALID_PARAMS, `${name} must be a positive uint value`);
-  }
-}
-
-function findPaymentCompletedEvent(receipt) {
-  const payment = getWritePaymentContract();
-
-  for (const log of receipt.logs) {
-    try {
-      const parsed = payment.interface.parseLog(log);
-      if (parsed?.name === "PaymentCompleted") {
-        return {
-          paymentId: parsed.args.paymentId,
-          payer: parsed.args.payer
-        };
-      }
-    } catch {
-      // Ignore logs emitted by other contracts in the same transaction.
-    }
-  }
-
-  return null;
 }
 
 function isJsonRpcRequest(request) {
