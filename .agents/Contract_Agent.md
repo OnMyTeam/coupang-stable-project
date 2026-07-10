@@ -20,11 +20,19 @@
 
 ## 출력 항목 형식
 
+Contract_Agent는 SmartContract 영역의 변경 전/후를 작성한다.
+Blockchain-API 영역은 최종 list 병합 단계에서 Blockchain-API_Agent 결과와 합쳐지며, 해당 항목에서 수정할 필요가 없으면 `수정사항 없음`으로 표시한다.
+
 ```json
 {
-  "area": "SmartContract",
   "summary": "{{변경할 내용 요약}}",
-  "before": "{{변경전 내용}}",
-  "after": "{{변경후 내용}}"
+  "smartContract": {
+    "before": "{{SmartContract 변경전 내용}}",
+    "after": "{{SmartContract 변경후 내용}}"
+  },
+  "blockchainApi": {
+    "before": "수정사항 없음",
+    "after": "수정사항 없음"
+  }
 }
 ```
