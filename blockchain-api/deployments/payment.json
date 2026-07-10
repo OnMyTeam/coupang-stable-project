@@ -2,8 +2,83 @@
   "contractName": "Payment",
   "network": "tempo",
   "chainId": "42431",
-  "address": "0xe18E37c1260f2A21853f41ddAE6D56Ac4ab04b60",
-  "transactionHash": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-  "abi": [],
-  "updatedAt": "2026-07-10T00:00:00+09:00"
+  "address": "0x5CE14451b12B00Aa4F8df6713E3E5F948c3B73f8",
+  "transactionHash": "0x9d1d45b0cfb55ed0b0d46222ceb07baf567506587176ffcbe8bf2557053f40d9",
+  "abi": [
+    {
+      "type": "function",
+      "name": "pay",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "PaymentCompleted",
+      "inputs": [
+        {
+          "name": "payer",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "InvalidAmount",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InvalidRecipient",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InvalidToken",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "TransferFailed",
+      "inputs": []
+    }
+  ],
+  "updatedAt": "2026-07-10T06:18:51.527Z"
 }

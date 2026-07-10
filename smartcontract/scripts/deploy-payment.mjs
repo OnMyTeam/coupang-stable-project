@@ -18,6 +18,7 @@ const rpcUrl = process.env.TEMPO_RPC_URL;
 const privateKey = normalizePrivateKey(process.env.PRIVATE_KEY);
 const chainId = process.env.TEMPO_CHAIN_ID || "";
 const network = process.env.NETWORK || "tempo";
+const forgeCommand = findForgeCommand();
 
 if (!rpcUrl) {
   throw new Error("TEMPO_RPC_URL is required");
@@ -27,7 +28,7 @@ if (!privateKey) {
   throw new Error("PRIVATE_KEY is required");
 }
 
-run("forge", ["build"]);
+run(forgeCommand, ["build"]);
 
 const scriptArgs = [
   "script",
@@ -40,10 +41,12 @@ const scriptArgs = [
   "--json"
 ];
 
-const output = run("forge", scriptArgs);
+const output = run(forgeCommand, scriptArgs);
 const broadcastData = findBroadcastData();
 const address = findDeployedAddress(output) || broadcastData.address;
-const transactionHash = findTransactionHash(output) || broadcastData.transactionHash;
+const transactionHash = isSameAddress(address, broadcastData.address)
+  ? broadcastData.transactionHash || findTransactionHash(output)
+  : findTransactionHash(output) || broadcastData.transactionHash;
 const artifact = readJson(path.join(smartcontractRoot, "out", "Payment.sol", "Payment.json"));
 
 if (!address) {
@@ -79,6 +82,29 @@ function run(command, args) {
     const stderr = error.stderr?.toString() || "";
     throw new Error(`${command} ${args.join(" ")} failed\n${stdout}\n${stderr}`);
   }
+}
+
+function findForgeCommand() {
+  const localForge = process.env.USERPROFILE
+    ? path.join(process.env.USERPROFILE, ".foundry", "bin", "forge.exe")
+    : "";
+  const candidates = [process.env.FORGE_PATH, "forge", localForge].filter(Boolean);
+
+  for (const candidate of candidates) {
+    try {
+      execFileSync(candidate, ["--version"], {
+        cwd: smartcontractRoot,
+        env: process.env,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"]
+      });
+      return candidate;
+    } catch {
+      // Try the next candidate.
+    }
+  }
+
+  throw new Error("forge command was not found. Install Foundry or set FORGE_PATH.");
 }
 
 function findDeployedAddress(output) {
@@ -211,6 +237,10 @@ function isAddress(value) {
 
 function isHash(value) {
   return typeof value === "string" && /^0x[0-9a-fA-F]{64}$/.test(value);
+}
+
+function isSameAddress(left, right) {
+  return isAddress(left) && isAddress(right) && left.toLowerCase() === right.toLowerCase();
 }
 
 function normalizePrivateKey(value) {

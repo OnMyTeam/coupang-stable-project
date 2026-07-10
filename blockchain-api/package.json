@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "node src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "test": "node --check src/server.js && node --check public/app.js && node scripts/validate-payment-api.mjs"
   },
   "dependencies": {
     "dotenv": "^17.2.0",

@@ -8,7 +8,8 @@ const FALLBACK_METHODS = [
   "rpc_methods",
   "chain_getBlockNumber",
   "chain_getTransactionReceipt",
-  "payment_getDeployment"
+  "payment_getDeployment",
+  "payment_pay"
 ];
 
 const METHOD_EXAMPLES = {
@@ -26,6 +27,14 @@ const METHOD_EXAMPLES = {
   },
   payment_getDeployment: {
     hint: "Returns the Payment contract deployment metadata."
+  },
+  payment_pay: {
+    hint: "Sends an ERC-20 stablecoin payment transaction through the Payment contract.",
+    params: {
+      token: "0x0000000000000000000000000000000000000000",
+      recipient: "0x0000000000000000000000000000000000000000",
+      amount: "1000000"
+    }
   }
 };
 
@@ -37,6 +46,10 @@ const historyList = document.querySelector("#history-list");
 const rawPayload = document.querySelector("#raw-payload");
 const apiMethodSelect = document.querySelector("#api-method-select");
 const apiMethodHint = document.querySelector("#api-method-hint");
+const paymentForm = document.querySelector("#payment-form");
+const paymentToken = document.querySelector("#payment-token");
+const paymentRecipient = document.querySelector("#payment-recipient");
+const paymentAmount = document.querySelector("#payment-amount");
 
 endpointInput.value = `${window.location.origin}/rpc`;
 
@@ -46,6 +59,7 @@ document.querySelector("#methods-button").addEventListener("click", getMethods);
 document.querySelector("#clear-history-button").addEventListener("click", clearHistory);
 document.querySelector("#format-raw-button").addEventListener("click", formatRawPayload);
 document.querySelector("#refresh-api-list-button").addEventListener("click", refreshApiMethods);
+paymentForm.addEventListener("submit", submitPayment);
 apiMethodSelect.addEventListener("change", () => {
   setRawPayloadExample(apiMethodSelect.value);
 });
@@ -123,6 +137,16 @@ async function sendRaw() {
     showResponse("Raw", toErrorBody(error), false);
     addHistory("raw", false, error.message);
   }
+}
+
+async function submitPayment(event) {
+  event.preventDefault();
+
+  await callRpc("payment_pay", {
+    token: paymentToken.value.trim(),
+    recipient: paymentRecipient.value.trim(),
+    amount: paymentAmount.value.trim()
+  });
 }
 
 function formatRawPayload() {

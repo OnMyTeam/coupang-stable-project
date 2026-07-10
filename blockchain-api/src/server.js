@@ -8,6 +8,7 @@ import { getPaymentDeploymentFile, loadPaymentDeployment } from "./paymentAbi.js
 const {
   PORT = "3000",
   RPC_PATH = "/rpc",
+  PRIVATE_KEY,
   TEMPO_RPC_URL
 } = process.env;
 
@@ -117,7 +118,8 @@ async function callMethod(method, params) {
         "rpc_methods",
         "chain_getBlockNumber",
         "chain_getTransactionReceipt",
-        "payment_getDeployment"
+        "payment_getDeployment",
+        "payment_pay"
       ];
     case "chain_getBlockNumber":
       return provider.getBlockNumber();
@@ -125,6 +127,8 @@ async function callMethod(method, params) {
       return getTransactionReceipt(params);
     case "payment_getDeployment":
       return getPublicPaymentDeployment();
+    case "payment_pay":
+      return pay(params);
     default:
       throw rpcError(ErrorCode.METHOD_NOT_FOUND, `Method not found: ${method}`);
   }
@@ -183,6 +187,58 @@ async function getTransactionReceipt(params) {
     gasUsed: receipt.gasUsed,
     cumulativeGasUsed: receipt.cumulativeGasUsed
   };
+}
+
+async function pay(params) {
+  const { token, recipient, amount } = parseObjectParams(params, [
+    "token",
+    "recipient",
+    "amount"
+  ]);
+
+  if (!PRIVATE_KEY) {
+    throw rpcError(ErrorCode.INVALID_PARAMS, "PRIVATE_KEY is required to send payment transactions");
+  }
+
+  if (!ethers.isAddress(token)) {
+    throw rpcError(ErrorCode.INVALID_PARAMS, "token must be a valid address");
+  }
+
+  if (!ethers.isAddress(recipient)) {
+    throw rpcError(ErrorCode.INVALID_PARAMS, "recipient must be a valid address");
+  }
+
+  const parsedAmount = parsePositiveIntegerParam(amount, "amount");
+  const deployment = getPaymentDeployment();
+  const signer = new ethers.Wallet(PRIVATE_KEY, provider);
+  const contract = new ethers.Contract(deployment.address, deployment.abi, signer);
+  const tx = await contract.pay(token, recipient, parsedAmount);
+
+  return {
+    hash: tx.hash,
+    from: tx.from,
+    to: tx.to,
+    method: "payment_pay",
+    token,
+    recipient,
+    amount: parsedAmount
+  };
+}
+
+function parsePositiveIntegerParam(value, name) {
+  if (typeof value === "number") {
+    if (!Number.isSafeInteger(value) || value <= 0) {
+      throw rpcError(ErrorCode.INVALID_PARAMS, `${name} must be a positive integer`);
+    }
+
+    return BigInt(value);
+  }
+
+  if (typeof value !== "string" || !/^[1-9][0-9]*$/.test(value)) {
+    throw rpcError(ErrorCode.INVALID_PARAMS, `${name} must be a positive integer string`);
+  }
+
+  return BigInt(value);
 }
 
 function parseObjectParams(params, requiredKeys) {

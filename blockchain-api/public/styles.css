@@ -193,7 +193,7 @@ textarea:focus {
   gap: 14px;
 }
 
-.contract-empty {
+.payment-panel {
   display: grid;
   gap: 8px;
   margin-bottom: 16px;
@@ -201,6 +201,15 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f7faf9;
+}
+
+.payment-form {
+  display: grid;
+  gap: 12px;
+}
+
+.payment-form .primary-button {
+  width: 100%;
 }
 
 .muted-copy {

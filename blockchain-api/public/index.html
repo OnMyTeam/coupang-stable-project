@@ -46,10 +46,24 @@
 
         <section class="main-grid">
           <div class="panel controls-panel">
-            <section class="contract-empty" aria-label="Payment contract status">
+            <section class="payment-panel" aria-label="Payment contract action">
               <p class="eyebrow">Payment Contract</p>
-              <h2>No callable methods</h2>
-              <p class="muted-copy">Payment.sol currently has no public or external functions.</p>
+              <h2>Stablecoin Payment</h2>
+              <form id="payment-form" class="payment-form">
+                <label class="field full" for="payment-token">
+                  <span>토큰 주소</span>
+                  <input id="payment-token" type="text" autocomplete="off" placeholder="0x..." />
+                </label>
+                <label class="field full" for="payment-recipient">
+                  <span>가맹점 EOA</span>
+                  <input id="payment-recipient" type="text" autocomplete="off" placeholder="0x..." />
+                </label>
+                <label class="field full" for="payment-amount">
+                  <span>수량</span>
+                  <input id="payment-amount" type="text" inputmode="numeric" autocomplete="off" placeholder="1000000" />
+                </label>
+                <button class="primary-button" type="submit">결제 실행</button>
+              </form>
             </section>
 
             <section class="api-picker-panel" aria-label="API request example">
